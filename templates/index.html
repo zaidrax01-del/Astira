@@ -778,4 +778,224 @@
       object-fit: cover;
       aspect-ratio: 1/1;
     }
-    .b
+    .badge-coming-soon {
+      background: rgba(255, 180, 70, 0.2);
+      border: 1px solid #ffb347;
+      border-radius: 60px;
+      padding: 4px 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #ffd966;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .generated-preview {
+      margin-top: 28px;
+      background: #091020cc;
+      border-radius: 36px;
+      padding: 24px;
+      border: 1px dashed #6bc2ff;
+    }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .coming-soon-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      text-align: center;
+      background: rgba(10, 18, 34, 0.5);
+      border-radius: 48px;
+      padding: 48px 24px;
+    }
+    .coming-soon-title {
+      font-size: 2.5rem;
+      font-family: 'Orbitron', monospace;
+      background: linear-gradient(135deg, #ffd966, #ffb347);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 16px;
+    }
+    .coming-soon-message {
+      font-size: 1.2rem;
+      opacity: 0.8;
+      max-width: 500px;
+      margin-bottom: 32px;
+    }
+    .loader {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #6bc2ff;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-message {
+      background: rgba(255, 80, 80, 0.2);
+      border: 1px solid #ff6666;
+      border-radius: 24px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    @media (max-width: 680px) {
+      .top-bar {
+        padding: 0 16px;
+      }
+      .logo-area {
+        font-size: 1.4rem;
+        gap: 4px;
+      }
+      .logo-diamond {
+        font-size: 1.2rem;
+      }
+      .connect-wallet-btn {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+      }
+      .profile-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
+      .right-controls {
+        gap: 8px;
+      }
+      .message {
+        max-width: 95%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cosmic background -->
+<div class="cosmic-bg">
+  <div class="stars" id="starfield"></div>
+  <div class="orbiting-planet planet-1"></div>
+  <div class="orbiting-planet planet-2"></div>
+  <div class="orbiting-planet planet-3"></div>
+  <div class="nebula"></div>
+</div>
+
+<div class="top-bar">
+  <button class="hamburger" id="hamburgerBtn" aria-label="Menu">☰</button>
+  <div class="logo-area">
+    <span class="logo-astira">ASTIRA</span>
+    <span class="logo-diamond">✦</span>
+    <span class="logo-ai">AI</span>
+  </div>
+  <div class="right-controls">
+    <button id="connectWalletBtn" class="connect-wallet-btn">🔌 Connect Wallet</button>
+    <div class="profile-icon">🌙</div>
+  </div>
+</div>
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<aside id="sidebar" class="sidebar">
+  <nav>
+    <a href="#" data-section="dashboard" class="nav-link active"><span>🌌</span><span>Dashboard</span></a>
+    <a href="#" data-section="createPlanet" class="nav-link"><span>🪐</span><span>Create Planet</span></a>
+    <a href="#" data-section="myPlanets" class="nav-link"><span>🌠</span><span>My Planets</span></a>
+    <a href="#" data-section="marketplace" class="nav-link"><span>🛒</span><span>Marketplace</span></a>
+    <a href="#" data-section="activity" class="nav-link"><span>🔔</span><span>Activity</span></a>
+    <a href="#" data-section="team" class="nav-link"><span>👥</span><span>Team</span></a>
+    <a href="#" data-section="whitepaper" class="nav-link"><span>📄</span><span>Whitepaper</span></a>
+    <a href="#" data-section="help" class="nav-link"><span>❓</span><span>Help Center</span></a>
+  </nav>
+  <div class="sidebar-socials">
+    <a href="https://x.com/astira_web3" target="_blank" class="social-icon" aria-label="X (Twitter)">𝕏</a>
+    <a href="https://t.me/astiraweb3" target="_blank" class="social-icon" aria-label="Telegram">✈️</a>
+  </div>
+</aside>
+
+<main id="appMain" class="main-content">
+  <div id="dynamicView">Loading Astira...</div>
+</main>
+
+<script>
+  // ========== FULLY CORRECTED JS WITH DOMContentLoaded ==========
+  document.addEventListener("DOMContentLoaded", function() {
+    console.log("✅ JS loaded – DOM ready");
+
+    // ***** UPDATED PLANET IMAGES (15 planets) *****
+    const CUSTOM_PLANETS = [
+      { name: "Ignarion", emoji: "🔥", type: "Fire Planet", rarity: "Rare", description: "A blazing world covered in molten oceans and erupting volcanoes.", imageData: "https://i.ibb.co/Wpprv92S/file-0000000082f4720a8e324b704b7fa33f.png" },
+      { name: "Verdyra", emoji: "🌿", type: "Nature Planet", rarity: "Uncommon", description: "A vibrant world filled with endless forests, glowing vegetation.", imageData: "https://i.ibb.co/hJbKCP0V/file-00000000271c7243adbdab4bb0fd7198.png" },
+      { name: "Cryonix", emoji: "❄️", type: "Ice Planet", rarity: "Rare", description: "A frozen world of endless glaciers and crystal storms.", imageData: "https://postimg.cc/VS5T0f0R" },
+      { name: "Solvaris", emoji: "☀️", type: "Desert Planet", rarity: "Uncommon", description: "A scorching world of endless dunes and blazing suns.", imageData: "https://i.postimg.cc/m2TpXVcZ/file-00000000c8347243b313707c839a3e4d.png" },
+      { name: "Terranova", emoji: "🌍", type: "Earth-like Planet", rarity: "Common", description: "A balanced and habitable world with oceans and forests.", imageData: "https://i.postimg.cc/NFCXxg9s/file-0000000088e071f4a38b674b96724918.png" },
+      { name: "Pyronox", emoji: "🌋", type: "Volcanic Planet", rarity: "Rare", description: "A dark and unstable world dominated by active volcanoes.", imageData: "https://i.postimg.cc/9XsZzfh1/file-00000000c45471f4b1804b339a61a154.png" },
+      { name: "Gravion", emoji: "🪨", type: "Rocky Planet", rarity: "Common", description: "A dense, heavy world with powerful gravity and rugged terrain.", imageData: "https://i.postimg.cc/s28DKvw1/file-00000000311071f4b675afc6b6c59f5d.png" },
+      { name: "Aqualis Prime", emoji: "🌊", type: "Water Planet", rarity: "Rare", description: "A vast ocean world where deep blue waters cover nearly the entire surface.", imageData: "https://i.postimg.cc/13fkBMTz/file-00000000bf4471f494e465dcce23961b.png" },
+      { name: "Heliora", emoji: "✨", type: "Energy Planet", rarity: "Epic", description: "A radiant world powered by pure energy, streams of light across its surface.", imageData: "https://i.postimg.cc/T1NkWvTN/file-000000007cbc72469880782e40456670.png" },
+      { name: "Ignis Rex", emoji: "🔥", type: "Ringed Fire Planet", rarity: "Epic", description: "A dominant volcanic world surrounded by a blazing ring of debris.", imageData: "https://i.postimg.cc/g0pKj2vz/file-00000000c70871f4be9c05b82f4421c5.png" },
+      { name: "Drakonis", emoji: "🐉", type: "Molten Core Planet", rarity: "Epic", description: "A fierce, fractured world with glowing magma veins running across its surface.", imageData: "https://i.postimg.cc/Y9HngxYx/file-00000000ed7c720a8d3af0568fb515cc.png" },
+      { name: "Voltaris", emoji: "⚡", type: "Storm/Electric Planet", rarity: "Epic", description: "A chaotic world surrounded by constant lightning storms.", imageData: "https://i.postimg.cc/zv3nRLt5/file-00000000e4c0720aa0fc22d47e152f15.png" },
+      { name: "Nebulon", emoji: "🌌", type: "Cosmic/Gas Planet", rarity: "Legendary", description: "A mysterious planet formed from swirling cosmic gases and nebula energy.", imageData: "https://i.postimg.cc/rzXKFzvK/file-00000000a12c7246bbf2eba55df79b6a.png" },
+      { name: "Gaialux", emoji: "🌱", type: "Life Planet", rarity: "Legendary", description: "A radiant world overflowing with advanced life forms and bioluminescent ecosystems.", imageData: "https://i.postimg.cc/ZKSNSMZJ/file-00000000bf047243a9c13e188e2fd9c9.png" },
+      { name: "Cindros", emoji: "🔥", type: "Burning Core Planet", rarity: "Legendary", description: "A volatile world with an exposed, blazing core visible from the surface.", imageData: "https://i.postimg.cc/h4rDXyTD/file-000000009f24720a8457f4d129b860b4.png" }
+    ];
+
+    let myPlanets = [];
+    let currentSection = "dashboard";
+    let lastGeneratedPlanet = null;
+
+    function initPlanets() {
+      myPlanets = CUSTOM_PLANETS.map(p => ({ ...p, aiGenerated: false, imageData: p.imageData }));
+    }
+
+    async function generatePlanetFromDescription(prompt) {
+      console.log("🔵 generatePlanetFromDescription called with prompt:", prompt);
+      if (!prompt || !prompt.trim()) prompt = "mysterious cosmic sphere";
+      const cleanPrompt = prompt.trim();
+
+      let planetName = cleanPrompt.split(' ').slice(0, 2).join(' ');
+      if (planetName.length < 3) planetName = cleanPrompt.slice(0, 20);
+      planetName = planetName.charAt(0).toUpperCase() + planetName.slice(1).substring(0, 24);
+      const emojiList = ["🪐", "🌍", "🌕", "🔮", "🌊", "🔥", "❄️", "💎", "🌀", "✨"];
+      const randomEmoji = emojiList[Math.floor(Math.random() * emojiList.length)];
+      const shortDesc = cleanPrompt.length > 70 ? cleanPrompt.slice(0, 67) + "…" : cleanPrompt;
+
+      try {
+        const response = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: cleanPrompt })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!data.image) throw new Error('Invalid response: missing image URL');
+        return {
+          imageData: data.image,
+          name: planetName,
+          description: shortDesc,
+          type: "AI Generated",
+          rarity: "Varies",
+          emoji: randomEmoji,
+          aiGenerated: true,
+          failed: false
+        };
+      } catch (error) {
+        console.error("❌ Generation failed:", error);
+        return {
+          imageData: null,
+          name: planetName,
+          description: shortDesc,
+          type: "Unknown",
+          rarity: "Unknown",
+          emoji: randomEmoji,
+          aiGenerated: false,
+          failed: true
+        };
+      }
+  }
+  
