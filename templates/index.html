@@ -999,3 +999,171 @@
       }
   }
   
+async function addNewPlanet(planet) {
+      if (!planet || !planet.name || planet.failed) return false;
+      myPlanets.push(planet);
+      addActivity(`🪐 AI-generated planet minted: ${planet.name} ${planet.emoji}`);
+      if (currentSection === "myPlanets") renderMyPlanetsView();
+      if (currentSection === "dashboard") renderDashboardView();
+      return true;
+    }
+
+    // Team data (unchanged)
+    const TEAM_MEMBERS = [
+      { name: "Astira", role: "CEO & Founder", bio: "Visionary behind the project, defining direction, purpose, and long-term goals.", avatar: "https://i.ibb.co/bMz81nMn/IMG-20260421-122500-468.jpg", twitter: "https://x.com/astira_web3", telegramUsername: "@Astira_web3", telegramLink: "https://t.me/Astira_web3" },
+      { name: "Bob", role: "Community Manager", bio: "Leads community development and engagement efforts.", avatar: "https://i.ibb.co/LdsRxcjr/IMG-20260421-122540-947.jpg", twitter: "https://x.com/bobbyd_great?s=11", telegramUsername: "@bobbythe_great", telegramLink: "https://t.me/bobbythe_great" },
+      { name: "Tom", role: "Project Promotion Manager", bio: "Oversees strategic promotion and growth of the project.", avatar: "https://i.ibb.co/bMz81nMn/IMG-20260421-122500-468.jpg", twitter: "https://x.com/astira_tom3?s=11", telegramUsername: "@astiraTom", telegramLink: "https://t.me/astiraTom" },
+      { name: "Croix", role: "Poster Designer", bio: "Creative mind behind visual identity and promotional graphics.", avatar: "https://i.ibb.co/G438tLCp/IMG-20260421-122548-698.jpg", twitter: "https://x.com/croixonchain?s=11", telegramUsername: "@croixonchain", telegramLink: "https://t.me/croixonchain" },
+      { name: "Zaidra", role: "Website Developer", bio: "Responsible for design, development, and maintenance of the web application.", avatar: "https://i.ibb.co/VW7yTczx/file-000000001c6072468f1da8c287dade13.png", twitter: "https://x.com/zaidra_", telegramUsername: "@zaidrax", telegramLink: "https://t.me/zaidrax" }
+    ];
+
+    function getAIResponse(userMessage) {
+      const msg = userMessage.toLowerCase();
+      if (msg.includes("create planet") || msg.includes("generate")) return "Go to 'Create Planet' tab, describe your planet, and click 'Generate AI Planet'.";
+      if (msg.includes("nft") || msg.includes("mint")) return "NFT minting is coming soon in Phase 2.";
+      return "I can answer questions about Astira, planet creation, and the roadmap. Please ask something specific!";
+    }
+
+    function renderHelpCenterView() {
+      const html = `<div class="help-center-container"><div class="ai-assistant-section"><div class="ai-assistant-header"><span>🤖</span><h2>Astira AI Assistant</h2></div><div class="chat-messages" id="chatMessages"><div class="message assistant"><div class="message-avatar">🤖</div><div class="message-bubble">Hello! Ask me anything.</div></div></div><div class="chat-input-area"><input type="text" id="chatInput" placeholder="Type your question..."><button id="sendChatBtn">Send</button></div></div><div class="faq-section"><h2>❓ FAQ</h2><div class="faq-list" id="faqList"></div></div></div>`;
+      document.getElementById("dynamicView").innerHTML = html;
+      const faqList = document.getElementById("faqList");
+      if (faqList) {
+        const faqs = [{ q: "What is Astira?", a: "Astira is an AI-powered NFT platform for planet NFTs." }, { q: "How do I create a planet?", a: "Go to 'Create Planet', describe it, and click 'Generate AI Planet'." }];
+        faqs.forEach(faq => {
+          const item = document.createElement("div");
+          item.className = "faq-item";
+          item.innerHTML = `<div class="faq-question"><span>${faq.q}</span><span class="icon">+</span></div><div class="faq-answer">${faq.a}</div>`;
+          faqList.appendChild(item);
+        });
+        document.querySelectorAll(".faq-item").forEach(item => { const q = item.querySelector(".faq-question"); q?.addEventListener("click", () => item.classList.toggle("open")); });
+      }
+      const chatInput = document.getElementById("chatInput"), sendBtn = document.getElementById("sendChatBtn"), chatMessages = document.getElementById("chatMessages");
+      function addMessage(text, isUser = false) {
+        if (!chatMessages) return;
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `message ${isUser ? "user" : "assistant"}`;
+        msgDiv.innerHTML = isUser ? `<div class="message-avatar">👤</div><div class="message-bubble">${text}</div>` : `<div class="message-avatar">🤖</div><div class="message-bubble">${text}</div>`;
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      function handleUserMessage() {
+        const userText = chatInput?.value.trim();
+        if (!userText) return;
+        addMessage(userText, true);
+        const aiReply = getAIResponse(userText);
+        setTimeout(() => addMessage(aiReply, false), 100);
+        if (chatInput) chatInput.value = "";
+      }
+      sendBtn?.addEventListener("click", handleUserMessage);
+      chatInput?.addEventListener("keypress", (e) => { if (e.key === "Enter") handleUserMessage(); });
+    }
+
+    function renderDashboardView() {
+      const featured = myPlanets.slice(0, 6);
+      const heroHTML = `<div class="hero-section"><div class="hero-left"><h1>Forge Your Cosmic Legacy</h1><p>Create, evolve, and explore unique planets powered by AI.</p><button class="hero-btn" id="heroCreateBtn">✨ Create Planet</button></div><div class="hero-right"></div></div>`;
+      const restHTML = `<div><div class="welcome-narrative"><h2>✦ Astira · Your Digital Universe ✦</h2><p>Astira is an NFT creation and trading platform built around the theme of "planets."</p></div><h3>🌟 Featured Worlds (Sample)</h3><div class="dashboard-cards">${featured.map(planet => `<div class="card"><div class="planet-image-card"><img src="${planet.imageData}" alt="${planet.name}"></div><h3>${planet.name} ${planet.emoji}</h3><p><strong>${planet.type}</strong> · ${planet.rarity}</p><p>${planet.description}</p><div class="badge-coming-soon">🔒 NFT Feature Soon</div></div>`).join('')}</div></div>`;
+      document.getElementById("dynamicView").innerHTML = heroHTML + restHTML;
+      const heroBtn = document.getElementById("heroCreateBtn");
+      if (heroBtn) heroBtn.addEventListener("click", () => switchToSection("createPlanet"));
+    }
+
+    function renderCreatePlanetView() {
+      const html = `<div><h2>🪐 AI Planet Forge (Flask + ModelsLab)</h2><p>Describe your dream planet — our AI will generate a unique image.</p><div style="margin:28px 0;"><input type="text" id="planetDescInput" placeholder="e.g., 'A crimson desert planet'"><div class="flex-between"><button id="generatePlanetBtn" class="btn btn-primary">✨ Generate AI Planet</button><button id="addGeneratedPlanetBtn" class="btn" disabled>🔒 Mint to My Planets (Coming Soon)</button></div></div><div id="generatedResultPlaceholder" class="generated-preview"><div style="text-align:center;">✨ Image will appear here ✨</div></div></div>`;
+      document.getElementById("dynamicView").innerHTML = html;
+      const generateBtn = document.getElementById("generatePlanetBtn"), descInput = document.getElementById("planetDescInput"), container = document.getElementById("generatedResultPlaceholder");
+      if (!generateBtn || !descInput || !container) return;
+      let isGenerating = false;
+      async function updatePreview() {
+        const description = descInput.value.trim();
+        if (!description) return alert("Please describe your planet.");
+        if (isGenerating) return;
+        isGenerating = true;
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<div class="loader"></div> Generating...';
+        container.innerHTML = `<div style="text-align:center;"><div class="loader"></div><p>AI is painting your world...</p></div>`;
+        try {
+          const generated = await generatePlanetFromDescription(description);
+          if (!generated || !generated.imageData) {
+            container.innerHTML = `<div class="error-message"><div style="font-size:1.5rem;">❌ GENERATION FAILED</div><p>Could not generate image. Check console.</p></div>`;
+          } else {
+            lastGeneratedPlanet = generated;
+            container.innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:28px; align-items:center;"><img src="${generated.imageData}" style="width:180px; height:180px; border-radius:50%; box-shadow:0 0 25px #6bc2ff; object-fit:cover;"><div><div style="font-size:3rem;">${generated.emoji}</div><strong style="font-size:1.6rem;">${generated.name}</strong><p>${generated.description}</p><div class="badge-coming-soon">🔒 Minting disabled (Coming Soon)</div></div></div>`;
+          }
+        } catch (err) { console.error(err); container.innerHTML = `<div class="error-message">❌ Error: ${err.message}</div>`; }
+        finally { isGenerating = false; generateBtn.disabled = false; generateBtn.innerHTML = '✨ Generate AI Planet'; }
+      }
+      generateBtn.addEventListener("click", updatePreview);
+    }
+
+    function renderMyPlanetsView() {
+      if (!myPlanets.length) { document.getElementById("dynamicView").innerHTML = `<div><h2>🌠 My Planets</h2><div class="card">No planets yet. Use 'Create Planet'.</div></div>`; return; }
+      const html = `<div><h2>🌠 My Planet Collection (${myPlanets.length} worlds)</h2><div class="planets-grid">${myPlanets.map(p => `<div class="card"><div class="planet-image-card"><img src="${p.imageData}" alt="${p.name}"></div><h3>${p.name} ${p.emoji}</h3><p><strong>${p.type}</strong> · ${p.rarity}</p><p>${p.description}</p><div class="badge-coming-soon">🔒 Trade / Mint (Soon)</div></div>`).join('')}</div></div>`;
+      document.getElementById("dynamicView").innerHTML = html;
+    }
+
+    function renderMarketplaceView() { document.getElementById("dynamicView").innerHTML = `<div class="coming-soon-container"><div class="coming-soon-title">🚧 NFT Marketplace</div><div class="coming-soon-message">Coming soon</div></div>`; }
+    function renderActivityView() { document.getElementById("dynamicView").innerHTML = `<div class="coming-soon-container"><div class="coming-soon-title">📡 Activity Feed</div><div class="coming-soon-message">Coming soon</div></div>`; }
+    function renderTeamView() {
+      const teamCards = TEAM_MEMBERS.map(m => `<div class="card"><img src="${m.avatar}" alt="${m.name}" class="team-avatar"><div class="team-name">${m.name}</div><div class="team-role">${m.role}</div><div class="team-bio">${m.bio}</div><div class="team-socials"><a href="${m.twitter}" target="_blank" class="team-x-icon">𝕏</a><a href="${m.telegramLink}" target="_blank" class="team-tg-text">${m.telegramUsername}</a></div></div>`).join('');
+      document.getElementById("dynamicView").innerHTML = `<div><h2>👥 Meet the Astira Team</h2><div class="team-grid">${teamCards}</div></div>`;
+    }
+    function renderWhitepaperView() {
+      document.getElementById("dynamicView").innerHTML = `<div class="whitepaper-container"><div class="whitepaper-header"><h1>📄 Astira Whitepaper</h1><button id="fullWhitepaperBtn" class="btn-whitepaper">📖 Read Full Whitepaper</button></div></div>`;
+      const btn = document.getElementById("fullWhitepaperBtn");
+      if (btn) btn.addEventListener("click", () => window.open("https://pdflink.to/1dd62a96/", "_blank"));
+    }
+
+    let activityLog = [{ text: "🚀 Astira AI online — connected to Flask backend.", timestamp: new Date() }];
+    function addActivity(message) { activityLog.unshift({ text: message, timestamp: new Date() }); if (currentSection === "activity") renderActivityView(); }
+
+    // Navigation
+    function closeSidebar() { document.getElementById("sidebar")?.classList.remove("open"); document.getElementById("sidebarOverlay")?.classList.remove("active"); }
+    function openSidebar() { document.getElementById("sidebar")?.classList.add("open"); document.getElementById("sidebarOverlay")?.classList.add("active"); }
+    function toggleSidebar() { const s = document.getElementById("sidebar"); s?.classList.contains("open") ? closeSidebar() : openSidebar(); }
+    function setActiveNavLink(sectionId) { document.querySelectorAll('.nav-link').forEach(link => { const ls = link.getAttribute('data-section'); if (ls === sectionId) link.classList.add('active'); else link.classList.remove('active'); }); }
+    function switchToSection(sectionId) {
+      currentSection = sectionId; setActiveNavLink(sectionId);
+      if (sectionId === "dashboard") renderDashboardView();
+      else if (sectionId === "createPlanet") renderCreatePlanetView();
+      else if (sectionId === "myPlanets") renderMyPlanetsView();
+      else if (sectionId === "marketplace") renderMarketplaceView();
+      else if (sectionId === "activity") renderActivityView();
+      else if (sectionId === "team") renderTeamView();
+      else if (sectionId === "whitepaper") renderWhitepaperView();
+      else if (sectionId === "help") renderHelpCenterView();
+      closeSidebar();
+    }
+
+    function handleConnectWallet() { alert("🔮 Wallet connection coming soon!"); }
+    function generateStars() {
+      const starContainer = document.getElementById('starfield');
+      if (!starContainer) return;
+      for (let i = 0; i < 280; i++) {
+        const star = document.createElement('div'); star.classList.add('star');
+        const size = 1 + Math.random() * 3;
+        star.style.width = `${size}px`; star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`; star.style.top = `${Math.random() * 100}%`;
+        star.style.animationDelay = `${Math.random() * 5}s`; star.style.animationDuration = `${2 + Math.random() * 4}s`;
+        starContainer.appendChild(star);
+      }
+    }
+    generateStars();
+
+    function init() {
+      initPlanets();
+      renderDashboardView();
+      currentSection = "dashboard";
+      setActiveNavLink("dashboard");
+      document.getElementById("hamburgerBtn")?.addEventListener("click", (e) => { e.stopPropagation(); toggleSidebar(); });
+      document.getElementById("sidebarOverlay")?.addEventListener("click", closeSidebar);
+      document.querySelectorAll(".nav-link").forEach(link => { link.addEventListener("click", (e) => { e.preventDefault(); const section = link.getAttribute("data-section"); if (section) switchToSection(section); }); });
+      window.addEventListener("resize", () => { if (window.innerWidth > 1000) closeSidebar(); });
+      const walletBtn = document.getElementById("connectWalletBtn");
+      if (walletBtn) walletBtn.addEventListener("click", handleConnectWallet);
+    }
+    init();
+  });
+</script>
+</body>
+</html>
