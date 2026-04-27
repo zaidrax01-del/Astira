@@ -1,93 +1,104 @@
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
 import requests
 import os
+import time
 
 app = Flask(__name__)
-CORS(app)
 
 API_KEY = os.getenv("MODELSLAB_API_KEY")
 
-
-@app.route("/")
+@app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template('index.html')
 
 
-@app.route("/generate", methods=["POST"])
+@app.route('/generate', methods=['POST'])
 def generate():
     try:
-        print("🔥 /generate called")
-
         data = request.get_json()
-        print("Incoming data:", data)
+        user_prompt = data.get("prompt", "").lower()
+        mode = data.get("mode", "static")  # static or dynamic
 
-        if not data:
-            return jsonify({"error": "No JSON received"}), 400
+        # 🔒 FORCE PLANET ONLY
+        allowed_words = ["planet", "galaxy", "world", "cosmic", "space", "orb"]
 
-        prompt = data.get("prompt")
-        mode = data.get("mode", "static")
+        if not any(word in user_prompt for word in allowed_words):
+            return jsonify({
+                "error": "❌ Only planet-related prompts allowed"
+            }), 400
 
-        if not prompt:
-            return jsonify({"error": "Prompt missing"}), 400
+        # ✨ Improve prompt automatically
+        final_prompt = f"high quality detailed space planet, {user_prompt}, glowing, cosmic background, 4k"
 
-        if not API_KEY:
-            return jsonify({"error": "API key missing on server"}), 500
-
-        # 🌍 Force planet style
-        final_prompt = f"A beautiful unique planet in space, {prompt}, glowing atmosphere, cinematic lighting, 4k, ultra realistic"
-
-        print("Final prompt:", final_prompt)
-
-        # Choose endpoint
-        if mode == "dynamic":
-            url = "https://modelslab.com/api/v6/video/text2video"
-        else:
+        # ========================
+        # 🖼 STATIC IMAGE
+        # ========================
+        if mode == "static":
             url = "https://modelslab.com/api/v6/realtime/text2img"
 
-        payload = {
-            "key": API_KEY,
-            "prompt": final_prompt,
-            "negative_prompt": "cars, humans, buildings, text, watermark",
-            "width": "512",
-            "height": "512",
-            "samples": "1",
-            "num_inference_steps": "30",
-            "guidance_scale": 7.5
-        }
+            payload = {
+                "key": API_KEY,
+                "prompt": final_prompt,
+                "negative_prompt": "car, human, animal, building",
+                "width": "512",
+                "height": "512",
+                "safety_checker": False
+            }
 
-        print("Sending request to Modelslab...")
+            res = requests.post(url, json=payload)
+            result = res.json()
 
-        response = requests.post(url, json=payload, timeout=60)
+            # 🧠 handle processing
+            while result.get("status") == "processing":
+                time.sleep(2)
+                fetch_url = result.get("fetch_result")
+                res = requests.get(fetch_url)
+                result = res.json()
 
-        print("Status Code:", response.status_code)
-        print("Raw response:", response.text)
+            if "output" not in result:
+                return jsonify({"error": result}), 500
 
-        try:
-            result = response.json()
-        except:
-            return jsonify({"error": "Invalid JSON from API", "raw": response.text}), 500
+            return jsonify({
+                "type": "image",
+                "url": result["output"][0]
+            })
 
-        print("Parsed result:", result)
 
-        # Handle API error
-        if "error" in result:
-            return jsonify({"error": result["error"]}), 500
+        # ========================
+        # 🎥 DYNAMIC VIDEO
+        # ========================
+        elif mode == "dynamic":
+            url = "https://modelslab.com/api/v6/text2video"
 
-        if result.get("status") == "processing":
-            return jsonify({"error": "Still processing, try again"}), 202
+            payload = {
+                "key": API_KEY,
+                "prompt": final_prompt + ", rotating planet, cinematic animation",
+                "seconds": 3
+            }
 
-        output = result.get("output")
+            res = requests.post(url, json=payload)
+            result = res.json()
 
-        if not output:
-            return jsonify({"error": "No output in response", "full": result}), 500
+            # 🧠 wait for video
+            while result.get("status") == "processing":
+                time.sleep(3)
+                fetch_url = result.get("fetch_result")
+                res = requests.get(fetch_url)
+                result = res.json()
 
-        return jsonify({
-            "output": output[0]
-        })
+            if "output" not in result:
+                return jsonify({"error": result}), 500
+
+            return jsonify({
+                "type": "video",
+                "url": result["output"][0]
+            })
+
+        else:
+            return jsonify({"error": "Invalid mode"}), 400
 
     except Exception as e:
-        print("💥 SERVER ERROR:", str(e))
+        print("ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
