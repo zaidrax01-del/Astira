@@ -1,7 +1,7 @@
 import os
 import re
 import logging
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
 # Optional dotenv – ignore if module not found
@@ -28,14 +28,11 @@ if USE_REPLICATE:
     import replicate
     client = replicate.Client(api_token=REPLICATE_API_TOKEN)
 
-# ------------------ FRONTEND ROUTES ------------------
+# ------------------ FRONTEND ROUTE ------------------
 @app.route('/')
 def serve_frontend():
-    return send_from_directory('.', 'index.html')
-
-@app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory('.', path)
+    # Assumes index.html is inside a 'templates' folder at the same level as app.py
+    return render_template('index.html')
 
 # ------------------ API ROUTES ------------------
 NEGATIVE_PROMPT = "car, vehicle, human, person, building, house, road, animal, logo, text, object, weapon, gun, tank, airplane"
