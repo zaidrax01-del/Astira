@@ -4,7 +4,6 @@ import logging
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
-# Optional dotenv – ignore if module not found
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -31,7 +30,6 @@ if USE_REPLICATE:
 # ------------------ FRONTEND ROUTE ------------------
 @app.route('/')
 def serve_frontend():
-    # Assumes index.html is inside a 'templates' folder at the same level as app.py
     return render_template('index.html')
 
 # ------------------ API ROUTES ------------------
