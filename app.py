@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 MODELSLAB_API_KEY = os.environ.get("MODELSLAB_API_KEY")
 USE_MODELSLAB = bool(MODELSLAB_API_KEY)
 
-# Placeholder URLs
 PLACEHOLDER_IMAGE = "https://placehold.co/1024x1024/1a2a3a/6bc2ff?text=AI+Planet+Image"
 PLACEHOLDER_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
 
@@ -67,13 +66,12 @@ def generate_image(prompt: str) -> str:
         )
         response.raise_for_status()
         data = response.json()
-        # ModelsLab response handling
         if "output" in data and isinstance(data["output"], list) and data["output"]:
             return data["output"][0]
         elif "image_url" in data:
             return data["image_url"]
         else:
-            logger.error(f"Unexpected ModelsLab image response: {data}")
+            logger.error(f"Unexpected response: {data}")
             return PLACEHOLDER_IMAGE
     except Exception as e:
         logger.error(f"Image generation failed: {e}")
@@ -109,7 +107,7 @@ def generate_video(prompt: str) -> str:
         elif "video_url" in data:
             return data["video_url"]
         else:
-            logger.error(f"Unexpected ModelsLab video response: {data}")
+            logger.error(f"Unexpected video response: {data}")
             return PLACEHOLDER_VIDEO
     except Exception as e:
         logger.error(f"Video generation failed: {e}")
