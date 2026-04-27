@@ -1453,3 +1453,18 @@
       else if(sectionId==="createPlanet") renderCreatePlanetView();
       else if(sectionId==="myPlanets") renderMyPlanetsView();
       else if(sectionId==="marketplace") renderMarketplaceView();
+      else if(sectionId==="activity") renderActivityView();
+      else if(sectionId==="team") renderTeamView();
+      else if(sectionId==="whitepaper") renderWhitepaperView();
+      else if(sectionId==="help") renderHelpCenterView();
+      closeSidebar();
+    }
+    function handleConnectWallet() { alert("🔮 Wallet connection coming soon!"); }
+    function generateStars() { const starContainer = document.getElementById('starfield'); if(!starContainer) return; for(let i=0;i<200;i++) { const star = document.createElement('div'); star.classList.add('star'); const size = 1+Math.random()*3; star.style.width=`${size}px`; star.style.height=`${size}px`; star.style.left=`${Math.random()*100}%`; star.style.top=`${Math.random()*100}%`; star.style.animationDelay=`${Math.random()*5}s`; star.style.animationDuration=`${2+Math.random()*4}s`; starContainer.appendChild(star); } }
+    generateStars();
+    function init() { initPlanets(); renderDashboardView(); setActiveNavLink("dashboard"); document.getElementById("hamburgerBtn")?.addEventListener("click", (e)=>{ e.stopPropagation(); toggleSidebar(); }); document.getElementById("sidebarOverlay")?.addEventListener("click", closeSidebar); document.querySelectorAll(".nav-link").forEach(link=>{ link.addEventListener("click",(e)=>{ e.preventDefault(); const section = link.getAttribute("data-section"); if(section) switchToSection(section); }); }); window.addEventListener("resize",()=>{ if(window.innerWidth>1000) closeSidebar(); }); const walletBtn = document.getElementById("connectWalletBtn"); if(walletBtn) walletBtn.addEventListener("click", handleConnectWallet); }
+    init();
+  });
+</script>
+</body>
+</html>
