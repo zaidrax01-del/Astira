@@ -1,14 +1,9 @@
 import os
 import re
 import logging
+import requests
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
 
 app = Flask(__name__)
 CORS(app)
@@ -17,22 +12,23 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ------------------ CONFIGURATION ------------------
-REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
-USE_REPLICATE = bool(REPLICATE_API_TOKEN)
+MODELSLAB_API_KEY = os.environ.get("MODELSLAB_API_KEY")
+USE_MODELSLAB = bool(MODELSLAB_API_KEY)
 
+# Placeholder URLs (used if no API key or generation fails)
 PLACEHOLDER_IMAGE = "https://placehold.co/1024x1024/1a2a3a/6bc2ff?text=AI+Planet+Image"
 PLACEHOLDER_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
 
-if USE_REPLICATE:
-    import replicate
-    client = replicate.Client(api_token=REPLICATE_API_TOKEN)
+# ModelsLab endpoints (adjust if your endpoints are different)
+MODELSLAB_IMAGE_URL = "https://api.modelslab.com/api/v2/text2img"
+MODELSLAB_VIDEO_URL = "https://api.modelslab.com/api/v2/text2video"
 
 # ------------------ FRONTEND ROUTE ------------------
 @app.route('/')
 def serve_frontend():
     return render_template('index.html')
 
-# ------------------ API ROUTES ------------------
+# ------------------ PROMPT TRANSFORMATION ------------------
 NEGATIVE_PROMPT = "car, vehicle, human, person, building, house, road, animal, logo, text, object, weapon, gun, tank, airplane"
 
 def transform_to_planet(raw_prompt: str, mode: str) -> str:
@@ -48,53 +44,75 @@ def transform_to_planet(raw_prompt: str, mode: str) -> str:
                 "Short seamless loop animation, duration 3 to 5 seconds, smooth continuous rotation, no cuts, no scene change. "
                 "Glowing atmosphere, moving particles, cinematic lighting, ultra realistic, 4k.")
 
+# ------------------ IMAGE GENERATION (ModelsLab) ------------------
 def generate_image(prompt: str) -> str:
-    if not USE_REPLICATE:
-        logger.warning("No REPLICATE_API_TOKEN set. Using placeholder image.")
+    if not USE_MODELSLAB:
+        logger.warning("No MODELSLAB_API_KEY set. Using placeholder image.")
         return PLACEHOLDER_IMAGE
+
+    headers = {
+        "Authorization": f"Bearer {MODELSLAB_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": NEGATIVE_PROMPT,
+        "width": 1024,
+        "height": 1024,
+        "num_inference_steps": 25,
+        "guidance_scale": 7.5,
+        "scheduler": "DPM++ 2M Karras"
+    }
     try:
-        output = replicate.run(
-            "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
-            input={
-                "prompt": prompt,
-                "negative_prompt": NEGATIVE_PROMPT,
-                "width": 1024,
-                "height": 1024,
-                "num_outputs": 1,
-                "scheduler": "DPMSolverMultistep",
-                "num_inference_steps": 25,
-                "guidance_scale": 7.5
-            }
-        )
-        return output[0]
+        response = requests.post(MODELSLAB_IMAGE_URL, json=payload, headers=headers, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        # Expected ModelsLab response: { "output": ["image_url"] } or { "image_url": "..." }
+        if "output" in data and isinstance(data["output"], list) and data["output"]:
+            return data["output"][0]
+        elif "image_url" in data:
+            return data["image_url"]
+        else:
+            logger.error(f"Unexpected ModelsLab response: {data}")
+            return PLACEHOLDER_IMAGE
     except Exception as e:
         logger.error(f"Image generation failed: {e}")
         return PLACEHOLDER_IMAGE
 
+# ------------------ VIDEO GENERATION (ModelsLab) ------------------
 def generate_video(prompt: str) -> str:
-    if not USE_REPLICATE:
-        logger.warning("No REPLICATE_API_TOKEN set. Using placeholder video.")
+    if not USE_MODELSLAB:
+        logger.warning("No MODELSLAB_API_KEY set. Using placeholder video.")
         return PLACEHOLDER_VIDEO
+
+    headers = {
+        "Authorization": f"Bearer {MODELSLAB_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "prompt": prompt,
+        "negative_prompt": NEGATIVE_PROMPT,
+        "num_frames": 25,
+        "fps": 6,
+        "motion_bucket_id": 127
+    }
     try:
-        image_prompt = prompt.replace("rotating animated", "static").replace("Short seamless loop animation", "High quality still")
-        image_url = generate_image(image_prompt)
-        output = replicate.run(
-            "stability-ai/stable-video-diffusion:3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438",
-            input={
-                "input_image": image_url,
-                "num_frames": 25,
-                "fps": 6,
-                "motion_bucket_id": 127,
-                "cond_aug": 0.02,
-                "decoding_t": 7,
-                "seed": 42
-            }
-        )
-        return output
+        response = requests.post(MODELSLAB_VIDEO_URL, json=payload, headers=headers, timeout=120)
+        response.raise_for_status()
+        data = response.json()
+        # Adjust based on ModelsLab video response format
+        if "output" in data and isinstance(data["output"], list) and data["output"]:
+            return data["output"][0]
+        elif "video_url" in data:
+            return data["video_url"]
+        else:
+            logger.error(f"Unexpected video response: {data}")
+            return PLACEHOLDER_VIDEO
     except Exception as e:
         logger.error(f"Video generation failed: {e}")
         return PLACEHOLDER_VIDEO
 
+# ------------------ MAIN GENERATION ROUTE ------------------
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.get_json()
@@ -123,7 +141,7 @@ def generate():
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "ok", "replicate_available": USE_REPLICATE})
+    return jsonify({"status": "ok", "modelslab_available": USE_MODELSLAB})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
