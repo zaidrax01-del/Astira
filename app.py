@@ -15,13 +15,9 @@ logger = logging.getLogger(__name__)
 MODELSLAB_API_KEY = os.environ.get("MODELSLAB_API_KEY")
 USE_MODELSLAB = bool(MODELSLAB_API_KEY)
 
-# Placeholder URLs (used if no API key or generation fails)
+# Placeholder URLs
 PLACEHOLDER_IMAGE = "https://placehold.co/1024x1024/1a2a3a/6bc2ff?text=AI+Planet+Image"
 PLACEHOLDER_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-
-# ModelsLab endpoints (adjust if your endpoints are different)
-MODELSLAB_IMAGE_URL = "https://api.modelslab.com/api/v2/text2img"
-MODELSLAB_VIDEO_URL = "https://api.modelslab.com/api/v2/text2video"
 
 # ------------------ FRONTEND ROUTE ------------------
 @app.route('/')
@@ -60,20 +56,24 @@ def generate_image(prompt: str) -> str:
         "width": 1024,
         "height": 1024,
         "num_inference_steps": 25,
-        "guidance_scale": 7.5,
-        "scheduler": "DPM++ 2M Karras"
+        "guidance_scale": 7.5
     }
     try:
-        response = requests.post(MODELSLAB_IMAGE_URL, json=payload, headers=headers, timeout=60)
+        response = requests.post(
+            "https://api.modelslab.com/api/v2/text2img",
+            json=payload,
+            headers=headers,
+            timeout=60
+        )
         response.raise_for_status()
         data = response.json()
-        # Expected ModelsLab response: { "output": ["image_url"] } or { "image_url": "..." }
+        # ModelsLab response handling
         if "output" in data and isinstance(data["output"], list) and data["output"]:
             return data["output"][0]
         elif "image_url" in data:
             return data["image_url"]
         else:
-            logger.error(f"Unexpected ModelsLab response: {data}")
+            logger.error(f"Unexpected ModelsLab image response: {data}")
             return PLACEHOLDER_IMAGE
     except Exception as e:
         logger.error(f"Image generation failed: {e}")
@@ -93,26 +93,29 @@ def generate_video(prompt: str) -> str:
         "prompt": prompt,
         "negative_prompt": NEGATIVE_PROMPT,
         "num_frames": 25,
-        "fps": 6,
-        "motion_bucket_id": 127
+        "fps": 6
     }
     try:
-        response = requests.post(MODELSLAB_VIDEO_URL, json=payload, headers=headers, timeout=120)
+        response = requests.post(
+            "https://api.modelslab.com/api/v2/text2video",
+            json=payload,
+            headers=headers,
+            timeout=120
+        )
         response.raise_for_status()
         data = response.json()
-        # Adjust based on ModelsLab video response format
         if "output" in data and isinstance(data["output"], list) and data["output"]:
             return data["output"][0]
         elif "video_url" in data:
             return data["video_url"]
         else:
-            logger.error(f"Unexpected video response: {data}")
+            logger.error(f"Unexpected ModelsLab video response: {data}")
             return PLACEHOLDER_VIDEO
     except Exception as e:
         logger.error(f"Video generation failed: {e}")
         return PLACEHOLDER_VIDEO
 
-# ------------------ MAIN GENERATION ROUTE ------------------
+# ------------------ MAIN ROUTE ------------------
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.get_json()
