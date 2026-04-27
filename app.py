@@ -1,7 +1,6 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
-import time
 import os
 
 app = Flask(__name__)
@@ -9,83 +8,89 @@ CORS(app)
 
 API_KEY = os.getenv("MODELSLAB_API_KEY")
 
+
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return "Backend running 🚀"
 
 
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
-        print("🔥 /generate called")
-
-        if not API_KEY:
-            print("❌ API KEY MISSING")
-            return jsonify({"error": "API key not set on server"}), 500
-
         data = request.get_json()
-        print("📦 Incoming data:", data)
 
-        prompt = data.get("prompt")
-        if not prompt:
-            return jsonify({"error": "No prompt provided"}), 400
+        user_prompt = data.get("prompt", "").strip()
+        mode = data.get("mode", "image")  # image or video
 
-        final_prompt = f"{prompt}, detailed planet, space, cinematic lighting, 4k"
-        print("🎯 Final prompt:", final_prompt)
+        if not user_prompt:
+            return jsonify({"error": "Prompt required"}), 400
 
-        url = "https://modelslab.com/api/v6/realtime/text2img"
+        # 🌍 FORCE PLANET OUTPUT
+        base_prompt = f"""
+        A unique fictional planet in space inspired by {user_prompt}.
+        Transform everything into a planet.
+        Spherical celestial body only.
+        Highly detailed, glowing atmosphere, cinematic lighting, 4k.
+        """
 
-        payload = {
-            "key": API_KEY,
-            "prompt": final_prompt,
-            "width": "512",
-            "height": "512",
-            "samples": 1
+        negative_prompt = "car, vehicle, human, person, building, house, road, logo, text, animal"
+
+        headers = {
+            "key": API_KEY
         }
 
-        print("🚀 Sending request to Modelslab...")
-        response = requests.post(url, json=payload)
+        # ===== IMAGE =====
+        if mode == "image":
+            url = "https://modelslab.com/api/v6/realtime/text2img"
 
-        print("📡 Raw response:", response.text)
+            payload = {
+                "prompt": base_prompt,
+                "negative_prompt": negative_prompt,
+                "width": "512",
+                "height": "512",
+                "samples": "1",
+                "num_inference_steps": "30",
+                "guidance_scale": 7.5
+            }
 
-        result = response.json()
-        print("🧠 Parsed response:", result)
+            res = requests.post(url, headers=headers, json=payload)
+            result = res.json()
 
-        # Handle async processing
-        if result.get("status") == "processing":
-            fetch_url = result.get("fetch_result")
+            if "output" not in result or not result["output"]:
+                return jsonify({"error": result}), 500
 
-            if not fetch_url:
-                return jsonify({"error": "No fetch URL returned"}), 500
+            return jsonify({"image_url": result["output"][0]})
 
-            print("⏳ Processing... polling")
+        # ===== VIDEO =====
+        elif mode == "video":
+            url = "https://modelslab.com/api/v6/video/text2video"
 
-            for i in range(5):
-                time.sleep(3)
-                poll = requests.get(fetch_url).json()
-                print(f"🔄 Poll {i+1}:", poll)
+            video_prompt = f"""
+            A rotating animated planet in space inspired by {user_prompt}.
+            Short seamless loop animation (3–5 seconds).
+            Smooth continuous rotation.
+            Loopable, no cuts.
+            Glowing atmosphere, particles, cinematic lighting, 4k.
+            """
 
-                if poll.get("status") == "success":
-                    return jsonify({"image": poll["output"][0]})
+            payload = {
+                "prompt": video_prompt,
+                "negative_prompt": negative_prompt
+            }
 
-            return jsonify({"error": "Still processing, try again"}), 500
+            res = requests.post(url, headers=headers, json=payload)
+            result = res.json()
 
-        # Success instantly
-        if result.get("status") == "success":
-            return jsonify({"image": result["output"][0]})
+            if "output" not in result or not result["output"]:
+                return jsonify({"error": result}), 500
 
-        # Failure
-        return jsonify({
-            "error": "Model failed",
-            "details": result
-        }), 500
+            return jsonify({"video_url": result["output"][0]})
+
+        else:
+            return jsonify({"error": "Invalid mode"}), 400
 
     except Exception as e:
-        print("❌ SERVER ERROR:", str(e))
-        return jsonify({
-            "error": "Server crashed",
-            "details": str(e)
-        }), 500
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
