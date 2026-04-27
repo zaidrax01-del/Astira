@@ -1,21 +1,19 @@
 import os
 import re
 import logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-# Optional: if you have a .env file, you can still load it, but it’s not mandatory.
-# We'll just use os.getenv directly.
+# Optional dotenv – ignore if module not found
 try:
     from dotenv import load_dotenv
-    load_dotenv()  # This will silently fail if the module is missing
+    load_dotenv()
 except ImportError:
-    pass  # dotenv not installed – just rely on os.getenv
+    pass
 
 app = Flask(__name__)
 CORS(app)
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -23,7 +21,6 @@ logger = logging.getLogger(__name__)
 REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
 USE_REPLICATE = bool(REPLICATE_API_TOKEN)
 
-# Placeholder URLs (used if no API key or generation fails)
 PLACEHOLDER_IMAGE = "https://placehold.co/1024x1024/1a2a3a/6bc2ff?text=AI+Planet+Image"
 PLACEHOLDER_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
 
@@ -31,24 +28,31 @@ if USE_REPLICATE:
     import replicate
     client = replicate.Client(api_token=REPLICATE_API_TOKEN)
 
-# ------------------ PROMPT TRANSFORMATION ------------------
+# ------------------ FRONTEND ROUTES ------------------
+@app.route('/')
+def serve_frontend():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return send_from_directory('.', path)
+
+# ------------------ API ROUTES ------------------
 NEGATIVE_PROMPT = "car, vehicle, human, person, building, house, road, animal, logo, text, object, weapon, gun, tank, airplane"
 
 def transform_to_planet(raw_prompt: str, mode: str) -> str:
-    """Ensure the prompt is planet-focused."""
     if not re.search(r'\bplanet\b', raw_prompt, re.IGNORECASE):
         raw_prompt += " planet"
     if mode == "image":
         return (f"A highly detailed fictional planet in space inspired by {raw_prompt}. "
                 "Transform the concept into a planet surface and atmosphere. "
                 "Spherical celestial body, glowing atmosphere, stars, cinematic lighting, ultra realistic, 4k, detailed textures.")
-    else:  # video
+    else:
         return (f"A rotating animated planet in space inspired by {raw_prompt}. "
                 "Transform the concept into a planet design. "
                 "Short seamless loop animation, duration 3 to 5 seconds, smooth continuous rotation, no cuts, no scene change. "
                 "Glowing atmosphere, moving particles, cinematic lighting, ultra realistic, 4k.")
 
-# ------------------ IMAGE GENERATION ------------------
 def generate_image(prompt: str) -> str:
     if not USE_REPLICATE:
         logger.warning("No REPLICATE_API_TOKEN set. Using placeholder image.")
@@ -67,23 +71,18 @@ def generate_image(prompt: str) -> str:
                 "guidance_scale": 7.5
             }
         )
-        image_url = output[0]
-        logger.info(f"Generated image: {image_url}")
-        return image_url
+        return output[0]
     except Exception as e:
         logger.error(f"Image generation failed: {e}")
         return PLACEHOLDER_IMAGE
 
-# ------------------ VIDEO GENERATION ------------------
 def generate_video(prompt: str) -> str:
     if not USE_REPLICATE:
         logger.warning("No REPLICATE_API_TOKEN set. Using placeholder video.")
         return PLACEHOLDER_VIDEO
     try:
-        # Step 1: generate a static keyframe
         image_prompt = prompt.replace("rotating animated", "static").replace("Short seamless loop animation", "High quality still")
         image_url = generate_image(image_prompt)
-        # Step 2: animate it
         output = replicate.run(
             "stability-ai/stable-video-diffusion:3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438",
             input={
@@ -96,14 +95,11 @@ def generate_video(prompt: str) -> str:
                 "seed": 42
             }
         )
-        video_url = output
-        logger.info(f"Generated video: {video_url}")
-        return video_url
+        return output
     except Exception as e:
         logger.error(f"Video generation failed: {e}")
         return PLACEHOLDER_VIDEO
 
-# ------------------ MAIN ROUTE ------------------
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.get_json()
@@ -123,11 +119,9 @@ def generate():
         if mode == 'image':
             image_url = generate_image(transformed_prompt)
             return jsonify({"status": "success", "image": image_url})
-        elif mode == 'video':
+        else:
             video_url = generate_video(transformed_prompt)
             return jsonify({"status": "success", "image": video_url})
-        else:
-            return jsonify({"status": "error", "error": "Invalid mode. Use 'image' or 'video'."}), 400
     except Exception as e:
         logger.exception("Unexpected error")
         return jsonify({"status": "error", "error": str(e)}), 500
