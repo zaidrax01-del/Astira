@@ -780,4 +780,271 @@
       aspect-ratio: 1/1;
       transition: transform 0.3s;
     }
-    .planet-image-card img
+    .planet-image-card img :hover { transform: scale(1.02); }
+    .badge-coming-soon {
+      background: rgba(255, 180, 70, 0.2);
+      border: 1px solid #ffb347;
+      border-radius: 60px;
+      padding: 4px 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #ffd966;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .generated-preview {
+      margin-top: 28px;
+      background: #091020cc;
+      border-radius: 36px;
+      padding: 24px;
+      border: 1px dashed #6bc2ff;
+    }
+    .flex-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .coming-soon-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      text-align: center;
+      background: rgba(10, 18, 34, 0.5);
+      border-radius: 48px;
+      padding: 48px 24px;
+    }
+    .coming-soon-title {
+      font-size: 2.5rem;
+      font-family: 'Orbitron', monospace;
+      background: linear-gradient(135deg, #ffd966, #ffb347);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 16px;
+    }
+    .coming-soon-message {
+      font-size: 1.2rem;
+      opacity: 0.8;
+      max-width: 500px;
+      margin-bottom: 32px;
+    }
+    .loader {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #6bc2ff;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-message {
+      background: rgba(255, 80, 80, 0.2);
+      border: 1px solid #ff6666;
+      border-radius: 24px;
+      padding: 20px;
+      text-align: center;
+      color: #ffaaaa;
+    }
+
+    .global-footer {
+      margin-top: 60px;
+      padding: 24px 0 20px;
+      border-top: 1px solid rgba(80, 180, 255, 0.3);
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .footer-social-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(15, 22, 40, 0.8);
+      backdrop-filter: blur(4px);
+      padding: 8px 20px;
+      border-radius: 60px;
+      text-decoration: none;
+      color: #b3e0ff;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: 1px solid rgba(90, 170, 255, 0.3);
+    }
+    .footer-social-link:hover {
+      background: #2a6ca3;
+      color: white;
+      transform: translateY(-2px);
+      border-color: #6bc2ff;
+    }
+    .footer-social-link svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+    @media (max-width: 680px) {
+      .global-footer {
+        gap: 16px;
+      }
+      .footer-social-link {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+      }
+    }
+
+    /* Prompt suggestions (planet-only) */
+    .prompt-suggestions {
+      margin: 24px 0 20px;
+    }
+    .suggestions-title {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: #b3e0ff;
+      letter-spacing: 0.5px;
+    }
+    .prompt-categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+    .prompt-category {
+      flex: 1;
+      min-width: 160px;
+      background: rgba(10, 18, 30, 0.5);
+      border-radius: 20px;
+      padding: 12px;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(90, 170, 255, 0.2);
+    }
+    .category-header {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(90, 170, 255, 0.4);
+      color: #ceecff;
+    }
+    .prompt-chip {
+      display: inline-block;
+      background: rgba(20, 40, 60, 0.8);
+      border: 1px solid #2f6c9e;
+      border-radius: 40px;
+      padding: 6px 14px;
+      margin: 0 8px 8px 0;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #d6edff;
+    }
+    .prompt-chip:hover {
+      background: #2a6ca3;
+      border-color: #6bc2ff;
+      transform: translateY(-2px);
+      color: white;
+    }
+    @media (max-width: 780px) {
+      .prompt-categories {
+        flex-direction: column;
+        gap: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cosmic-bg">
+  <div class="stars" id="starfield"></div>
+  <div class="orbiting-planet planet-1"></div>
+  <div class="orbiting-planet planet-2"></div>
+  <div class="orbiting-planet planet-3"></div>
+  <div class="nebula"></div>
+</div>
+
+<div class="top-bar">
+  <button class="hamburger" id="hamburgerBtn" aria-label="Menu">☰</button>
+  <div class="logo-area">
+    <span class="logo-astira">ASTIRA</span>
+  </div>
+  <div class="right-controls">
+    <button id="connectWalletBtn" class="connect-wallet-btn">🔌 Connect Wallet</button>
+    <div class="profile-icon">🌙</div>
+  </div>
+</div>
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+<aside id="sidebar" class="sidebar">
+  <nav>
+    <a href="#" data-section="dashboard" class="nav-link active"><span>🌌</span><span>Dashboard</span></a>
+    <a href="#" data-section="createPlanet" class="nav-link"><span>🪐</span><span>Create Planet</span></a>
+    <a href="#" data-section="myPlanets" class="nav-link"><span>🌠</span><span>My Planets</span></a>
+    <a href="#" data-section="marketplace" class="nav-link"><span>🛒</span><span>Marketplace</span></a>
+    <a href="#" data-section="activity" class="nav-link"><span>🔔</span><span>Activity</span></a>
+    <a href="#" data-section="team" class="nav-link"><span>👥</span><span>Team</span></a>
+    <a href="#" data-section="whitepaper" class="nav-link"><span>📄</span><span>Whitepaper</span></a>
+    <a href="#" data-section="help" class="nav-link"><span>❓</span><span>Help Center</span></a>
+  </nav>
+  <div class="sidebar-socials">
+    <a href="https://x.com/astira_web3" target="_blank" class="social-icon" aria-label="X (Twitter)">
+      <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+    <a href="https://t.me/astiraweb3" target="_blank" class="social-icon" aria-label="Telegram">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.213-1.446 1.394c-.16.16-.295.287-.605.287l.214-3.086 5.613-5.074c.244-.217-.053-.338-.38-.121l-6.94 4.375-3.008-.94c-.655-.204-.667-.655.137-.969l11.758-4.53c.544-.199 1.048.131.874 1.09z"/></svg>
+    </a>
+  </div>
+</aside>
+
+<main id="appMain" class="main-content">
+  <div id="dynamicView">Loading Astira...</div>
+</main>
+
+<script>
+  // ========== ANIMATION ENGINE (unchanged) ==========
+  (function(){
+    try {
+      const categories = {
+        glow: ['glow', 'neon', 'light', 'aura', 'radiant'],
+        fire: ['fire', 'flame', 'heat', 'explosion', 'molten', 'blaze'],
+        water: ['water', 'ocean', 'wave', 'liquid', 'aqua', 'tide'],
+        electric: ['electric', 'lightning', 'energy', 'power', 'thunder', 'zap'],
+        magic: ['magic', 'fantasy', 'aura', 'mystical', 'enchant', 'spell'],
+        space: ['space', 'galaxy', 'orbit', 'float', 'zero gravity', 'cosmic', 'star'],
+        cyber: ['cyber', 'digital', 'glitch', 'tech', 'hologram', 'circuit'],
+        luxury: ['luxury', 'gold', 'shine', 'sparkle', 'premium', 'crystal'],
+        dark: ['dark', 'shadow', 'horror', 'smoke', 'void', 'abyss'],
+        nature: ['nature', 'wind', 'leaf', 'organic', 'breeze', 'forest'],
+        speed: ['speed', 'motion', 'racing', 'dynamic', 'fast', 'dash'],
+        abstract: ['abstract', 'distortion', 'surreal', 'psychedelic', 'fractal']
+      };
+      function randomRange(min, max) { return min + Math.random() * (max - min); }
+      const styleSheet = document.createElement('style');
+      document.head.appendChild(styleSheet);
+      for (let cat in categories) {
+        for (let i = 1; i <= 20; i++) {
+          const duration = randomRange(0.8, 3.5).toFixed(2);
+          const delay = randomRange(0, 1.5).toFixed(2);
+          const intensity = randomRange(0.3, 1.2).toFixed(2);
+          const rotate = randomRange(-5, 5).toFixed(1);
+          const shadowIntensity = randomRange(3, 20).toFixed(1);
+          const blur = randomRange(0, 6).toFixed(1);
+          let keyframes = '';
+          if (cat === 'glow') {
+            keyframes = `@keyframes anim_${cat}_${i} { 0% { filter: brightness(1) drop-shadow(0 0 0px rgba(255,200,100,0)); } 50% { filter: brightness(${0.8 + intensity*0.3}) drop-shadow(0 0 ${shadowIntensity}px rgba(255,220,100,0.8)); } 100% { filter: brightness(1) drop-shadow(0 0 0px rgba(255,200,100,0)); } }`;
+          } else if (cat === 'fire') {
+            keyframes = `@keyframes anim_${cat}_${i} { 0% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 0px rgba(255,80,0,0)); } 25% { transform: scale(${0.98 + intensity*0.04}); filter: brightness(1.1) drop-shadow(0 0 ${shadowIntensity}px rgba(255,80,0,0.8)); } 75% { transform: scale(${1.02 + intensity*0.04}); filter: brightness(1.15) drop-shadow(0 0 ${shadowIntensity*0.7}px rgba(255,140,0,0.6)); } 100% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 0px rgba(255,80,0,0)); } }`;
+          } else if (cat === 'water') {
+            keyframes = `@keyframes anim_${cat}_${i} { 0% { transform: translateY(0px) rotate(0deg); filter: brightness(1); } 25% { transform: translateY(${-2 - intensity*2}px) rotate(${-rotate}deg); filter: brightness(1.02); } 75% { transform: translateY(${2 + intensity*2}px) rotate(${rotate}deg); filter: brightness(0.98); } 100% { transform: translateY(0px) rotate(0deg); filter: brightness(1); } }`;
+          } else if (cat === 'electric') {
+            keyframes = `@keyframes anim_${cat}_${i} { 0% { filter: brightness(1) drop-shadow(0 0 0px cyan); } 10% { filter: brightness(1.2) drop-shadow(0 0 ${shadowIntensity}px cyan); } 20% { filter: brightness(1) drop-shadow(0 0 0px cyan); } 30% { filter: brightness(1.3) drop-shadow(0 0 ${shadowIntensity*1.2}px cyan); } 100% { filter: brightness(1) drop-shadow(0 0 0px cyan); } }`;
+          } else if (cat === 'magic') {
