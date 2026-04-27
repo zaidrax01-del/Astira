@@ -7,42 +7,47 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-# 🔑 API KEY (set this in Render ENV)
 API_KEY = os.getenv("MODELSLAB_API_KEY")
 
-# 🌍 Allowed keywords
 PLANET_KEYWORDS = [
     "planet", "world", "moon", "globe",
     "gas giant", "exoplanet", "celestial"
 ]
 
 
-# ✅ Serve frontend
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-# 🚀 Generate endpoint
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
         data = request.get_json()
-        prompt = data.get("prompt", "").lower()
-        mode = data.get("mode", "static")  # static or dynamic
 
-        # ❌ Restrict prompts
+        prompt = data.get("prompt", "").lower()
+        mode = data.get("mode", "image")  # image or video
+
+        if not prompt:
+            return jsonify({
+                "status": "error",
+                "image": None,
+                "message": "Prompt required"
+            }), 400
+
+        # ❌ Restrict to planet-related prompts
         if not any(word in prompt for word in PLANET_KEYWORDS):
             return jsonify({
                 "status": "error",
-                "message": "❌ Only planet-related prompts allowed"
+                "image": None,
+                "message": "Only planet-related prompts allowed"
             }), 400
 
-        # 🔥 Force planet style
+        # 🔥 Force planet output
         final_prompt = f"{prompt}, detailed planet, space, cinematic lighting, ultra realistic"
 
-        # 🧠 Choose endpoint
-        if mode == "dynamic":
+        # 🔁 Choose API
+        if mode == "video":
             url = "https://modelslab.com/api/v6/text2video"
         else:
             url = "https://modelslab.com/api/v6/text2img"
@@ -57,30 +62,31 @@ def generate():
             "num_inference_steps": "30"
         }
 
-        # 🚀 Send request
+        # 🚀 Initial request
         response = requests.post(url, json=payload)
         result = response.json()
 
-        print("STEP 1 RESPONSE:", result)
+        print("STEP 1:", result)
 
-        # 🟡 If processing → poll result
+        # ⏳ Handle async processing
         if result.get("status") == "processing":
             request_id = result.get("id")
 
-            fetch_url = "https://modelslab.com/api/v6/fetch"
-
-            for _ in range(10):  # try 10 times
+            for _ in range(10):
                 time.sleep(2)
 
-                check = requests.post(fetch_url, json={
-                    "key": API_KEY,
-                    "request_id": request_id
-                }).json()
+                fetch = requests.post(
+                    "https://modelslab.com/api/v6/fetch",
+                    json={
+                        "key": API_KEY,
+                        "request_id": request_id
+                    }
+                ).json()
 
-                print("FETCH RESPONSE:", check)
+                print("FETCH:", fetch)
 
-                if check.get("status") == "success":
-                    result = check
+                if fetch.get("status") == "success":
+                    result = fetch
                     break
 
         # ✅ Success
@@ -90,18 +96,19 @@ def generate():
             if not output:
                 return jsonify({
                     "status": "error",
+                    "image": None,
                     "message": "No image returned"
                 }), 500
 
             return jsonify({
                 "status": "success",
-                "type": "video" if mode == "dynamic" else "image",
-                "url": output[0]
+                "image": output[0]   # 🔥 IMPORTANT (matches your HTML)
             })
 
-        # ❌ Fail
+        # ❌ Failure
         return jsonify({
             "status": "error",
+            "image": None,
             "message": result.get("message", "Generation failed")
         }), 500
 
@@ -109,7 +116,18 @@ def generate():
         print("ERROR:", str(e))
         return jsonify({
             "status": "error",
+            "image": None,
             "message": "Server error"
+        }), 500
+
+
+@app.route("/health")
+def health():
+    return "OK 🚀"
+
+
+if __name__ == "__main__":
+    app.run(debug=True)            "message": "Server error"
         }), 500
 
 
