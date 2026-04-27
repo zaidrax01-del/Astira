@@ -2,18 +2,16 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import requests
 import os
-import time
 
 app = Flask(__name__)
 CORS(app)
 
+# 🔑 Put your API key in Render ENV (IMPORTANT)
 API_KEY = os.getenv("MODELSLAB_API_KEY")
 
-PLANET_KEYWORDS = [
-    "planet", "world", "moon", "globe",
-    "gas giant", "exoplanet", "celestial"
-]
-
+# 🌍 Planet enforcement
+def force_planet_prompt(user_prompt):
+    return f"A beautiful unique planet in space, {user_prompt}, cinematic lighting, glowing atmosphere, ultra realistic, 4k, space background"
 
 @app.route("/")
 def home():
@@ -23,126 +21,58 @@ def home():
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
-        data = request.get_json() or {}
+        data = request.get_json()
+        user_prompt = data.get("prompt", "")
+        mode = data.get("mode", "static")  # static or dynamic
 
-        prompt = data.get("prompt", "").strip().lower()
-        mode = data.get("mode", "image")
+        if not user_prompt:
+            return jsonify({"error": "Prompt required"}), 400
 
-        if not prompt:
-            return jsonify({
-                "status": "error",
-                "image": None,
-                "message": "Prompt is required"
-            }), 400
+        # 🌍 Force planet
+        final_prompt = force_planet_prompt(user_prompt)
 
-        # 🔑 Check API key
-        if not API_KEY:
-            return jsonify({
-                "status": "error",
-                "image": None,
-                "message": "API key missing (set MODELSLAB_API_KEY on Render)"
-            }), 500
-
-        # 🌍 Restrict to planets
-        if not any(word in prompt for word in PLANET_KEYWORDS):
-            return jsonify({
-                "status": "error",
-                "image": None,
-                "message": "Only planet-related prompts allowed"
-            }), 400
-
-        # 🔥 Force planet styling
-        final_prompt = f"{prompt}, detailed planet, space, cinematic lighting, ultra realistic"
-
-        url = "https://modelslab.com/api/v6/text2img"
+        # 🔀 Choose API
+        if mode == "dynamic":
+            url = "https://modelslab.com/api/v6/video/text2video"
+        else:
+            url = "https://modelslab.com/api/v6/realtime/text2img"
 
         payload = {
             "key": API_KEY,
             "prompt": final_prompt,
-            "negative_prompt": "car, human, building, text, watermark",
+            "negative_prompt": "cars, humans, buildings, text, watermark",
             "width": "512",
             "height": "512",
             "samples": "1",
-            "num_inference_steps": "30"
+            "num_inference_steps": "30",
+            "guidance_scale": 7.5
         }
 
-        # 🚀 Send request
-        response = requests.post(url, json=payload, timeout=60)
+        response = requests.post(url, json=payload)
+        result = response.json()
 
-        # ⚠️ Handle non-JSON safely
-        try:
-            result = response.json()
-        except:
-            return jsonify({
-                "status": "error",
-                "image": None,
-                "message": "Invalid response from AI server"
-            }), 500
+        print("MODEL RESPONSE:", result)  # 👈 VERY IMPORTANT (check logs)
 
-        print("MODEL RESPONSE:", result)
+        # ❌ Handle errors safely
+        if "error" in result:
+            return jsonify({"error": result["error"]}), 500
 
-        # ⏳ Handle async processing
         if result.get("status") == "processing":
-            request_id = result.get("id")
+            return jsonify({"error": "Still generating, try again"}), 202
 
-            for _ in range(10):
-                time.sleep(2)
+        # ✅ Extract output safely
+        output = result.get("output")
 
-                fetch_res = requests.post(
-                    "https://modelslab.com/api/v6/fetch",
-                    json={
-                        "key": API_KEY,
-                        "request_id": request_id
-                    },
-                    timeout=30
-                )
+        if not output:
+            return jsonify({"error": "No output returned"}), 500
 
-                try:
-                    fetch = fetch_res.json()
-                except:
-                    continue
-
-                print("FETCH:", fetch)
-
-                if fetch.get("status") == "success":
-                    result = fetch
-                    break
-
-        # ✅ SUCCESS
-        if result.get("status") == "success":
-            output = result.get("output")
-
-            if output and len(output) > 0:
-                return jsonify({
-                    "status": "success",
-                    "image": output[0]
-                })
-
-            return jsonify({
-                "status": "error",
-                "image": None,
-                "message": "No image returned"
-            }), 500
-
-        # ❌ HANDLE API ERROR CLEANLY
         return jsonify({
-            "status": "error",
-            "image": None,
-            "message": result.get("message", "Generation failed")
-        }), 200  # 👈 IMPORTANT (no more HTTP 500)
+            "output": output[0]
+        })
 
     except Exception as e:
-        print("SERVER ERROR:", str(e))
-        return jsonify({
-            "status": "error",
-            "image": None,
-            "message": "Server crashed"
-        }), 200  # 👈 prevents frontend breaking
-
-
-@app.route("/health")
-def health():
-    return "OK 🚀"
+        print("ERROR:", str(e))
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
