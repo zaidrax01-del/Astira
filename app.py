@@ -6,12 +6,8 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# 🔑 Put your API key in Render ENV (IMPORTANT)
 API_KEY = os.getenv("MODELSLAB_API_KEY")
 
-# 🌍 Planet enforcement
-def force_planet_prompt(user_prompt):
-    return f"A beautiful unique planet in space, {user_prompt}, cinematic lighting, glowing atmosphere, ultra realistic, 4k, space background"
 
 @app.route("/")
 def home():
@@ -21,17 +17,29 @@ def home():
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
+        print("🔥 /generate called")
+
         data = request.get_json()
-        user_prompt = data.get("prompt", "")
-        mode = data.get("mode", "static")  # static or dynamic
+        print("Incoming data:", data)
 
-        if not user_prompt:
-            return jsonify({"error": "Prompt required"}), 400
+        if not data:
+            return jsonify({"error": "No JSON received"}), 400
 
-        # 🌍 Force planet
-        final_prompt = force_planet_prompt(user_prompt)
+        prompt = data.get("prompt")
+        mode = data.get("mode", "static")
 
-        # 🔀 Choose API
+        if not prompt:
+            return jsonify({"error": "Prompt missing"}), 400
+
+        if not API_KEY:
+            return jsonify({"error": "API key missing on server"}), 500
+
+        # 🌍 Force planet style
+        final_prompt = f"A beautiful unique planet in space, {prompt}, glowing atmosphere, cinematic lighting, 4k, ultra realistic"
+
+        print("Final prompt:", final_prompt)
+
+        # Choose endpoint
         if mode == "dynamic":
             url = "https://modelslab.com/api/v6/video/text2video"
         else:
@@ -48,30 +56,38 @@ def generate():
             "guidance_scale": 7.5
         }
 
-        response = requests.post(url, json=payload)
-        result = response.json()
+        print("Sending request to Modelslab...")
 
-        print("MODEL RESPONSE:", result)  # 👈 VERY IMPORTANT (check logs)
+        response = requests.post(url, json=payload, timeout=60)
 
-        # ❌ Handle errors safely
+        print("Status Code:", response.status_code)
+        print("Raw response:", response.text)
+
+        try:
+            result = response.json()
+        except:
+            return jsonify({"error": "Invalid JSON from API", "raw": response.text}), 500
+
+        print("Parsed result:", result)
+
+        # Handle API error
         if "error" in result:
             return jsonify({"error": result["error"]}), 500
 
         if result.get("status") == "processing":
-            return jsonify({"error": "Still generating, try again"}), 202
+            return jsonify({"error": "Still processing, try again"}), 202
 
-        # ✅ Extract output safely
         output = result.get("output")
 
         if not output:
-            return jsonify({"error": "No output returned"}), 500
+            return jsonify({"error": "No output in response", "full": result}), 500
 
         return jsonify({
             "output": output[0]
         })
 
     except Exception as e:
-        print("ERROR:", str(e))
+        print("💥 SERVER ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
