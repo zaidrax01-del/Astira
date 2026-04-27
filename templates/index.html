@@ -1098,3 +1098,153 @@
   // ========== MAIN APP ==========
   document.addEventListener("DOMContentLoaded", function() {
     console.log("✅ DOM ready");
+
+      // ---- 15 SAMPLE PLANETS (unchanged) ----
+    const CUSTOM_PLANETS = [
+      { name: "Ignarion", emoji: "🔥", type: "Fire Planet", rarity: "Rare", description: "A blazing world covered in molten oceans and erupting volcanoes.", imageData: "https://i.ibb.co/Wpprv92S/file-0000000082f4720a8e324b704b7fa33f.png" },
+      { name: "Verdyra", emoji: "🌿", type: "Nature Planet", rarity: "Uncommon", description: "A vibrant world filled with endless forests, glowing vegetation.", imageData: "https://i.ibb.co/hJbKCP0V/file-00000000271c7243adbdab4bb0fd7198.png" },
+      { name: "Cryonix", emoji: "❄️", type: "Ice Planet", rarity: "Rare", description: "A frozen world of endless glaciers and crystal storms.", imageData: "https://i.postimg.cc/GhYfK1Wz/file-0000000096fc71f4986f98d20fa2f655.png" },
+      { name: "Solvaris", emoji: "☀️", type: "Desert Planet", rarity: "Uncommon", description: "A scorching world of endless dunes and blazing suns.", imageData: "https://i.postimg.cc/m2TpXVcZ/file-00000000c8347243b313707c839a3e4d.png" },
+      { name: "Terranova", emoji: "🌍", type: "Earth-like Planet", rarity: "Common", description: "A balanced and habitable world with oceans and forests.", imageData: "https://i.postimg.cc/NFCXxg9s/file-0000000088e071f4a38b674b96724918.png" },
+      { name: "Pyronox", emoji: "🌋", type: "Volcanic Planet", rarity: "Rare", description: "A dark and unstable world dominated by active volcanoes.", imageData: "https://i.postimg.cc/9XsZzfh1/file-00000000c45471f4b1804b339a61a154.png" },
+      { name: "Gravion", emoji: "🪨", type: "Rocky Planet", rarity: "Common", description: "A dense, heavy world with powerful gravity and rugged terrain.", imageData: "https://i.postimg.cc/s28DKvw1/file-00000000311071f4b675afc6b6c59f5d.png" },
+      { name: "Aqualis Prime", emoji: "🌊", type: "Water Planet", rarity: "Rare", description: "A vast ocean world where deep blue waters cover nearly the entire surface.", imageData: "https://i.postimg.cc/13fkBMTz/file-00000000bf4471f494e465dcce23961b.png" },
+      { name: "Heliora", emoji: "✨", type: "Energy Planet", rarity: "Epic", description: "A radiant world powered by pure energy, streams of light across its surface.", imageData: "https://i.postimg.cc/T1NkWvTN/file-000000007cbc72469880782e40456670.png" },
+      { name: "Ignis Rex", emoji: "🔥", type: "Ringed Fire Planet", rarity: "Epic", description: "A dominant volcanic world surrounded by a blazing ring of debris.", imageData: "https://i.postimg.cc/g0pKj2vz/file-00000000c70871f4be9c05b82f4421c5.png" },
+      { name: "Drakonis", emoji: "🐉", type: "Molten Core Planet", rarity: "Epic", description: "A fierce, fractured world with glowing magma veins running across its surface.", imageData: "https://i.postimg.cc/Y9HngxYx/file-00000000ed7c720a8d3af0568fb515cc.png" },
+      { name: "Voltaris", emoji: "⚡", type: "Storm/Electric Planet", rarity: "Epic", description: "A chaotic world surrounded by constant lightning storms.", imageData: "https://i.postimg.cc/zv3nRLt5/file-00000000e4c0720aa0fc22d47e152f15.png" },
+      { name: "Nebulon", emoji: "🌌", type: "Cosmic/Gas Planet", rarity: "Legendary", description: "A mysterious planet formed from swirling cosmic gases and nebula energy.", imageData: "https://i.postimg.cc/rzXKFzvK/file-00000000a12c7246bbf2eba55df79b6a.png" },
+      { name: "Gaialux", emoji: "🌱", type: "Life Planet", rarity: "Legendary", description: "A radiant world overflowing with advanced life forms and bioluminescent ecosystems.", imageData: "https://i.postimg.cc/ZKSNSMZJ/file-00000000bf047243a9c13e188e2fd9c9.png" },
+      { name: "Cindros", emoji: "🔥", type: "Burning Core Planet", rarity: "Legendary", description: "A volatile world with an exposed, blazing core visible from the surface.", imageData: "https://i.postimg.cc/h4rDXyTD/file-000000009f24720a8457f4d129b860b4.png" }
+    ];
+
+    let myPlanets = [], currentSection = "dashboard", lastGeneratedPlanet = null;
+    function initPlanets() { myPlanets = CUSTOM_PLANETS.map(p => ({ ...p, aiGenerated: false, imageData: p.imageData })); }
+    async function addNewPlanet(planet) {
+      if(!planet||!planet.name||planet.failed) return false;
+      myPlanets.push(planet);
+      addActivity(`🪐 AI-generated planet minted: ${planet.name} ${planet.emoji}`);
+      if(currentSection==="myPlanets") renderMyPlanetsView();
+      if(currentSection==="dashboard") renderDashboardView();
+      return true;
+    }
+
+    const TEAM_MEMBERS = [
+      { name: "Astira", role: "CEO & Founder", bio: "Visionary behind the project, defining direction, purpose, and long-term goals. Leads overall strategy, product vision, and innovation.", avatar: "https://i.ibb.co/bMz81nMn/IMG-20260421-122500-468.jpg", twitter: "https://x.com/astira_web3", telegramUsername: "@Astira_web3", telegramLink: "https://t.me/Astira_web3" },
+      { name: "Bob", role: "Community Manager", bio: "Builds and nurtures a strong, active, and loyal user base across all platforms, ensuring the community's voice is heard.", avatar: "https://i.ibb.co/LdsRxcjr/IMG-20260421-122540-947.jpg", twitter: "https://x.com/bobbyd_great?s=11", telegramUsername: "@bobbythe_great", telegramLink: "https://t.me/bobbythe_great" },
+      { name: "Tom", role: "Project Promotion Manager", bio: "Oversees strategic promotion and growth of the project, manages marketing campaigns, partnerships, and outreach.", avatar: "https://i.ibb.co/bMz81nMn/IMG-20260421-122500-468.jpg", twitter: "https://x.com/astira_tom3?s=11", telegramUsername: "@astiraTom", telegramLink: "https://t.me/astiraTom" },
+      { name: "Croix", role: "Poster Designer", bio: "Creative mind behind visual identity and promotional graphics, designing eye-catching posters, banners, and content.", avatar: "https://i.ibb.co/G438tLCp/IMG-20260421-122548-698.jpg", twitter: "https://x.com/croixonchain?s=11", telegramUsername: "@croixonchain", telegramLink: "https://t.me/croixonchain" },
+      { name: "Zaidra", role: "Website Developer", bio: "Responsible for design, development, and maintenance of the web application, building UI and integrating AI systems.", avatar: "https://i.ibb.co/VW7yTczx/file-000000001c6072468f1da8c287dade13.png", twitter: "https://x.com/zaidra_", telegramUsername: "@zaidrax", telegramLink: "https://t.me/zaidrax" }
+    ];
+
+    // ========== AI ASSISTANT (200+ questions) ==========
+    const aiResponses = {
+      what_is_astira: ["Astira is an AI‑powered NFT platform where you generate, mint, trade and evolve unique planet NFTs.", "Astira is a Web3 platform that lets you create your own AI‑generated planet, mint it as an NFT, evolve it over time, and trade it."],
+      create_planet: ["Go to the 'Create Planet' tab, describe your concept, choose output type (Image/Video), and click Generate AI Planet.", "To create a planet: open Create Planet, type a description, select static or video, and generate."],
+      nft_minting: ["NFT minting is not yet live – it's part of Phase 2. Minting will allow you to turn your AI creations into tradable NFTs.", "Minting is coming soon! We are developing the smart contract. Follow our socials for updates."],
+      marketplace: ["The marketplace is under development. Once Phase 2 is complete, you'll be able to buy, sell, and auction your planets.", "Trading is not live yet. We are building a decentralized marketplace with integration/deconstruction features."],
+      evolution: ["Planets are 'living assets' – they can evolve through user actions (staking, tasks, events) and on‑chain cosmic events.", "Evolution is planned for Phase 3. Your planet will grow and change over time based on your interactions."],
+      tokenomics: ["$AST is the utility and governance token. Uses: minting fees, premium AI services, staking, DAO voting, special events.", "Token distribution: 25% ecosystem, 20% team, 20% community incentives, 15% liquidity, 10% marketing, 10% airdrop."],
+      dao: ["The Planetary Council (DAO) will allow holders of original NFTs, planets, and $AST to vote on platform upgrades.", "DAO governance is planned for Phase 4. It will give the community real influence over the Astira universe."],
+      galaxy_map: ["All minted planets will be displayed on a unified galaxy map. You can visit other planets, view logs, stories, and activity records.", "The map turns trading into social interaction – it will host interstellar trade fairs and themed exhibitions."],
+      fusion_deconstruction: ["Integration (fusion) lets you merge two planet NFTs to create a hybrid planet. Deconstruction breaks a planet into resource fragments.", "These mechanics create a multi‑layer cycle: generation → cultivation → integration → deconstruction → re‑trading."],
+      astronomical_data: ["We will introduce exoplanet parameters from NASA and ESA databases. You can generate 'scientific artistic' planet NFTs.", "Regular 'Discover New Planets' creative activities will let the community vote for works that best match real exoplanet characteristics."],
+      team: ["Our team includes Astira (CEO & Founder), Bob (Community Manager), Tom (Promotion Manager), Croix (Poster Designer), and Zaidra (Website Developer).", "We are a passionate group of Web3 veterans, AI engineers, and creative designers."],
+      whitepaper: ["You can read the full Astira whitepaper in the Whitepaper tab. It covers vision, AI generation, dynamic evolution, tokenomics, roadmap, and more.", "The whitepaper is available in the sidebar under 'Whitepaper'."],
+      roadmap: ["Phase 1 (completed): AI generator, dashboard. Phase 2 (in progress): NFT minting, marketplace MVP. Phase 3: full marketplace, evolution system, token launch. Phase 4: DAO, cross‑chain, mobile app.", "Our roadmap includes four phases: validation, gameplay enhancement, ecological expansion, and infrastructure upgrade (Astira Chain)."],
+      wallet: ["You can click the 'Connect Wallet' button in the top bar – it's a preview. Full wallet integration will come with minting and marketplace features.", "A Web3 wallet will be required to mint NFTs, trade, stake $AST, and participate in DAO voting."],
+      help_faq: ["You'll find 20 common questions in the FAQ section below. If your question isn't there, just ask me!", "Check the accordion FAQ for quick answers about creation, NFTs, marketplace, token, and more."]
+    };
+    const keywordMap = [
+      { keywords: ["what is astira","what's astira","tell me about astira","astira platform","explain astira"], responseKey: "what_is_astira" },
+      { keywords: ["create planet","how to create","generate planet","planet creation","how do i create","ai generation"], responseKey: "create_planet" },
+      { keywords: ["mint nft","nft minting","is minting live","when can i mint","minting fees","mint my planet"], responseKey: "nft_minting" },
+      { keywords: ["marketplace","sell planet","buy planet","trade","listing","secondary market"], responseKey: "marketplace" },
+      { keywords: ["evolution","evolve planet","dynamic nft","planet growth","upgrade planet"], responseKey: "evolution" },
+      { keywords: ["token","$ast","ast token","tokenomics","token model","utility token","governance token"], responseKey: "tokenomics" },
+      { keywords: ["dao","governance","planetary council","vote","voting"], responseKey: "dao" },
+      { keywords: ["galaxy map","star map","social exploration","explore planets","interactive map"], responseKey: "galaxy_map" },
+      { keywords: ["fusion","merge","integrate planets","deconstruct","resource fragments","hybrid planet"], responseKey: "fusion_deconstruction" },
+      { keywords: ["astronomical data","nasa","esa","real exoplanet","scientific","space data"], responseKey: "astronomical_data" },
+      { keywords: ["team","who made astira","founder","developers","astira team"], responseKey: "team" },
+      { keywords: ["whitepaper","white paper","documentation","full whitepaper","pdf"], responseKey: "whitepaper" },
+      { keywords: ["roadmap","phases","phase 1","phase 2","phase 3","phase 4"], responseKey: "roadmap" },
+      { keywords: ["wallet","connect wallet","metamask","how to connect","web3 wallet"], responseKey: "wallet" },
+      { keywords: ["faq","frequently asked","common questions","help","support"], responseKey: "help_faq" }
+    ];
+    function getAIResponse(userMessage) {
+      const lowerMsg = userMessage.toLowerCase().trim();
+      for (let entry of keywordMap) {
+        for (let kw of entry.keywords) {
+          if (lowerMsg.includes(kw)) {
+            const responses = aiResponses[entry.responseKey];
+            return responses[Math.floor(Math.random() * responses.length)];
+          }
+        }
+      }
+      const fallbacks = [
+        "I can answer questions about Astira's AI planet generation, NFT minting, marketplace, tokenomics, roadmap, team, DAO, and more. Try asking 'How do I create a planet?'",
+        "That's a great question! I'm trained on the Astira whitepaper. You can ask about 'how to create a planet', 'what is the DAO', or check the FAQ below.",
+        "Let me help – try asking something like 'What is the original series?', 'How does fusion work?', 'When is the marketplace launching?'"
+      ];
+      return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    }
+
+    // ========== 20 REAL FAQs ==========
+    const faqsList = [
+      { q: "What is Astira?", a: "Astira is an AI-powered NFT platform where you generate, mint, trade, and evolve unique planet NFTs." },
+      { q: "How do I create a planet?", a: "Go to the 'Create Planet' tab, describe your planet, and click 'Generate AI Planet'. The AI will create a unique image." },
+      { q: "Is NFT minting live?", a: "Not yet. Minting will be available in Phase 2. Follow our socials for updates." },
+      { q: "Can I sell my planets?", a: "The marketplace is under development. Once live, you'll be able to list, sell, and auction your planets." },
+      { q: "What is the Original Planet Series?", a: "16 original planets are the aesthetic ancestors. New planets inherit their visual genes, and original holders receive royalties." },
+      { q: "How does planet evolution work?", a: "Planets evolve through user actions (staking, tasks, events) and on-chain cosmic events. They can gain satellites, skins, rarity upgrades." },
+      { q: "What is the galaxy map?", a: "All minted planets will be displayed on a unified map. You can visit other planets, view stories, and participate in social events." },
+      { q: "Can I fuse or deconstruct planets?", a: "Yes. Integration (fusion) creates hybrid planets; deconstruction breaks planets into tradeable resource fragments. Both are planned for Phase 3." },
+      { q: "What is the $AST token?", a: "$AST is the utility and governance token. Uses: minting fees, premium AI, staking, DAO voting, special events. Distribution: 25% ecosystem, 20% team, 20% community, 15% liquidity, 10% marketing, 10% airdrop." },
+      { q: "What is the DAO?", a: "The Planetary Council – holders of original NFTs, planets, and $AST vote on platform upgrades, event rules, AI fine‑tuning, and incentives." },
+      { q: "Will Astira have its own blockchain?", a: "Yes – once scale and complexity require it, we plan to launch Astira Chain for higher‑frequency interactions and lower costs." },
+      { q: "What is the roadmap?", a: "Phase 1: validation (completed). Phase 2: gameplay enhancement. Phase 3: ecological expansion. Phase 4: infrastructure upgrade (Astira Chain)." },
+      { q: "How do I join the community?", a: "Join our Telegram (@astiraweb3) and follow X (Twitter) using the icons in the sidebar." },
+      { q: "Is the platform free?", a: "Generating planets is free. Minting and trading will involve network fees and platform fees, but we aim to keep costs low." },
+      { q: "How can I contact support?", a: "Use this AI assistant for immediate help, or reach out on Telegram for further assistance." },
+      { q: "What AI model do you use?", a: "We use Hugging Face's Stable Diffusion 2.1 via a secure Flask backend." },
+      { q: "What are the planet rarities?", a: "Rarities: Common, Uncommon, Rare, Epic, Legendary. Higher rarity = more value and evolution potential." },
+      { q: "What is the gene inheritance mechanism?", a: "New planets must have a mapping relationship with the original 16 planets in color, structure, or theme. Royalties are shared with original series holders." },
+      { q: "Where is Astira deployed?", a: "Initially on low‑fee chains like Solana. Long‑term we plan to launch Astira Chain." },
+      { q: "How can I stay updated?", a: "Follow our X (Twitter) @astira_web3 and Telegram t.me/astiraweb3." }
+    ];
+
+    // ----- GLOBAL FOOTER -----
+    function renderGlobalFooter() {
+      const footerDiv = document.createElement('div');
+      footerDiv.className = 'global-footer';
+      footerDiv.innerHTML = `
+        <a href="https://x.com/astira_web3" target="_blank" class="footer-social-link">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          <span>X (Twitter)</span>
+        </a>
+        <a href="https://t.me/astiraweb3" target="_blank" class="footer-social-link">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.213-1.446 1.394c-.16.16-.295.287-.605.287l.214-3.086 5.613-5.074c.244-.217-.053-.338-.38-.121l-6.94 4.375-3.008-.94c-.655-.204-.667-.655.137-.969l11.758-4.53c.544-.199 1.048.131.874 1.09z"/></svg>
+          <span>Telegram</span>
+        </a>
+      `;
+      let existingFooter = document.querySelector('.global-footer');
+      if (existingFooter) existingFooter.remove();
+      document.getElementById("dynamicView").parentNode.appendChild(footerDiv);
+    }
+    function applyFooter() { renderGlobalFooter(); }
+
+    // ----- RENDER FUNCTIONS -----
+    function renderDashboardView() {
+      const featured = myPlanets.slice(0,6);
+      const heroHTML = `<div class="hero-section"><div class="hero-left"><h1>Forge Your Cosmic Legacy</h1><p>Create, evolve, and explore unique planets powered by AI.</p><button class="hero-btn" id="heroCreateBtn">✨ Create Planet</button></div><div class="hero-right"></div></div>`;
+      const restHTML = `<div><div class="welcome-narrative"><h2>✦ Astira · Your Digital Universe ✦</h2><p>Astira is an NFT creation and trading platform built around the theme of "planets."</p></div><h3>🌟 Featured Worlds (Sample)</h3><div class="dashboard-cards">${featured.map(planet => `<div class="card"><div class="planet-image-card"><img src="${planet.imageData}" alt="${planet.name}"></div><h3>${planet.name} ${planet.emoji}</h3><p><strong>${planet.type}</strong> · ${planet.rarity}</p><p>${planet.description}</p><div class="badge-coming-soon">🔒 NFT Feature Soon</div></div>`).join('')}</div></div>`;
+      document.getElementById("dynamicView").innerHTML = heroHTML + restHTML;
+      const heroBtn = document.getElementById("heroCreateBtn");
+      if (heroBtn) heroBtn.addEventListener("click", () => switchToSection("createPlanet"));
+      applyFooter();
+    }
+
+    // ========== CREATE PLANET VIEW (no animation toggle, bigger button) ==========
+    function renderCreatePlanetView() {
+      const html = `
