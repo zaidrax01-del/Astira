@@ -3,13 +3,17 @@ import re
 import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
 
-# Load environment variables from .env file (optional)
-load_dotenv()
+# Optional: if you have a .env file, you can still load it, but it’s not mandatory.
+# We'll just use os.getenv directly.
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # This will silently fail if the module is missing
+except ImportError:
+    pass  # dotenv not installed – just rely on os.getenv
 
 app = Flask(__name__)
-CORS(app)  # allow your frontend to call this backend
+CORS(app)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,23 +23,19 @@ logger = logging.getLogger(__name__)
 REPLICATE_API_TOKEN = os.environ.get("REPLICATE_API_TOKEN")
 USE_REPLICATE = bool(REPLICATE_API_TOKEN)
 
-# If you don't have a token, we'll return placeholder URLs for testing
+# Placeholder URLs (used if no API key or generation fails)
 PLACEHOLDER_IMAGE = "https://placehold.co/1024x1024/1a2a3a/6bc2ff?text=AI+Planet+Image"
-PLACEHOLDER_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"  # sample looping video
+PLACEHOLDER_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
 
-# Only import replicate if we have a token
 if USE_REPLICATE:
     import replicate
     client = replicate.Client(api_token=REPLICATE_API_TOKEN)
 
-# ------------------ PROMPT TRANSFORMATION (ensures planet theme) ------------------
+# ------------------ PROMPT TRANSFORMATION ------------------
 NEGATIVE_PROMPT = "car, vehicle, human, person, building, house, road, animal, logo, text, object, weapon, gun, tank, airplane"
 
 def transform_to_planet(raw_prompt: str, mode: str) -> str:
-    """
-    Convert any user input into a planet-only prompt.
-    """
-    # Remove any obvious non-planet words? Not strictly necessary, we just append "planet" if missing.
+    """Ensure the prompt is planet-focused."""
     if not re.search(r'\bplanet\b', raw_prompt, re.IGNORECASE):
         raw_prompt += " planet"
     if mode == "image":
@@ -50,7 +50,6 @@ def transform_to_planet(raw_prompt: str, mode: str) -> str:
 
 # ------------------ IMAGE GENERATION ------------------
 def generate_image(prompt: str) -> str:
-    """Generate a static planet image using Replicate (SDXL) or return placeholder."""
     if not USE_REPLICATE:
         logger.warning("No REPLICATE_API_TOKEN set. Using placeholder image.")
         return PLACEHOLDER_IMAGE
@@ -68,7 +67,6 @@ def generate_image(prompt: str) -> str:
                 "guidance_scale": 7.5
             }
         )
-        # output is a list of URLs
         image_url = output[0]
         logger.info(f"Generated image: {image_url}")
         return image_url
@@ -78,13 +76,11 @@ def generate_image(prompt: str) -> str:
 
 # ------------------ VIDEO GENERATION ------------------
 def generate_video(prompt: str) -> str:
-    """Generate a short looping planet video using Replicate's Stable Video Diffusion, or placeholder."""
     if not USE_REPLICATE:
         logger.warning("No REPLICATE_API_TOKEN set. Using placeholder video.")
         return PLACEHOLDER_VIDEO
     try:
-        # Stable Video Diffusion requires an initial image. We generate a keyframe first.
-        # Step 1: generate a still image
+        # Step 1: generate a static keyframe
         image_prompt = prompt.replace("rotating animated", "static").replace("Short seamless loop animation", "High quality still")
         image_url = generate_image(image_prompt)
         # Step 2: animate it
@@ -115,12 +111,11 @@ def generate():
         return jsonify({"status": "error", "error": "No JSON body"}), 400
 
     raw_prompt = data.get('prompt', '').strip()
-    mode = data.get('mode', 'image')  # 'image' or 'video'
+    mode = data.get('mode', 'image')
 
     if not raw_prompt:
         return jsonify({"status": "error", "error": "Missing prompt"}), 400
 
-    # Transform prompt to ensure planet theme
     transformed_prompt = transform_to_planet(raw_prompt, mode)
     logger.info(f"Transformed prompt ({mode}): {transformed_prompt}")
 
@@ -137,7 +132,6 @@ def generate():
         logger.exception("Unexpected error")
         return jsonify({"status": "error", "error": str(e)}), 500
 
-# ------------------ HEALTH CHECK ------------------
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok", "replicate_available": USE_REPLICATE})
