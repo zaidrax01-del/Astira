@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 MODELSLAB_API_KEY = os.environ.get("MODELSLAB_API_KEY", "GoVcDK5X0lCBO7g5EqA5nadFa271inGouA7Rs2YIciqejZfaTfF9G1pJkzlX")
 MODELSLAB_IMAGE_URL = "https://modelslab.com/api/v6/images/text2img"
 
-# For video - ModelsLab may have a different endpoint, we'll use placeholder for now
 PLACEHOLDER_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
 
 # ------------------ FRONTEND ROUTE ------------------
@@ -28,7 +27,6 @@ def serve_frontend():
 NEGATIVE_PROMPT = "car, vehicle, human, person, building, house, road, animal, logo, text, object, weapon, gun, tank, airplane, blurry, low quality, deformed"
 
 def transform_to_planet(raw_prompt: str, mode: str) -> str:
-    # Ensure planet theme
     if not re.search(r'\bplanet\b', raw_prompt, re.IGNORECASE):
         raw_prompt += " planet"
     
@@ -60,22 +58,40 @@ def generate_image(prompt: str) -> str:
             data = response.json()
             logger.info(f"Response keys: {data.keys() if data else 'None'}")
             
-            # ModelsLab v6 response format
-            if "output" in data and data["output"]:
-                image_url = data["output"][0] if isinstance(data["output"], list) else data["output"]
-                logger.info(f"Generated image URL: {image_url}")
+            # Handle ModelsLab response - image URL is in future_links
+            if "future_links" in data and data["future_links"]:
+                image_url = data["future_links"][0]
+                logger.info(f"✅ Image generated successfully: {image_url}")
                 return image_url
+            
+            # Alternative response formats
+            elif "output" in data and data["output"]:
+                image_url = data["output"][0] if isinstance(data["output"], list) else data["output"]
+                logger.info(f"✅ Image from output: {image_url}")
+                return image_url
+            
             elif "image_url" in data:
+                logger.info(f"✅ Image from image_url: {data['image_url']}")
                 return data["image_url"]
+            
             elif "images" in data and data["images"]:
+                logger.info(f"✅ Image from images: {data['images'][0]}")
                 return data["images"][0]
-            elif "status" in data and data.get("status") == "success":
-                # Sometimes output comes in a different field
-                if "output" in data:
-                    return data["output"]
+            
             else:
                 logger.error(f"Unexpected response format: {data}")
-                return f"https://placehold.co/1024x1024/1a2a3a/6bc2ff?text=API+Error:+Check+logs"
+                # If we have an ID, we could poll the fetch endpoint
+                if "id" in data:
+                    fetch_url = f"https://modelslab.com/api/v6/images/fetch/{data['id']}"
+                    logger.info(f"Trying to fetch from: {fetch_url}")
+                    time.sleep(2)  # Wait a bit
+                    fetch_response = requests.get(fetch_url, params={"key": MODELSLAB_API_KEY})
+                    if fetch_response.status_code == 200:
+                        fetch_data = fetch_response.json()
+                        if "output" in fetch_data and fetch_data["output"]:
+                            return fetch_data["output"][0]
+                
+                return f"https://placehold.co/1024x1024/1a2a3a/ff6666?text=No+image+URL"
         else:
             error_text = response.text[:200]
             logger.error(f"API error {response.status_code}: {error_text}")
@@ -88,11 +104,8 @@ def generate_image(prompt: str) -> str:
         logger.error(f"Image generation failed: {e}")
         return f"https://placehold.co/1024x1024/1a2a3a/ff6666?text=Exception"
 
-# ------------------ VIDEO GENERATION (placeholder - upgrade later) ------------------
 def generate_video(prompt: str) -> str:
-    # ModelsLab video endpoint would go here
-    # For now, return a placeholder
-    logger.info(f"Video generation requested with prompt: {prompt[:100]}...")
+    logger.info(f"Video generation requested (placeholder for now)")
     return PLACEHOLDER_VIDEO
 
 # ------------------ MAIN ROUTE ------------------
@@ -110,7 +123,6 @@ def generate():
 
     transformed_prompt = transform_to_planet(raw_prompt, mode)
     logger.info(f"Mode: {mode}")
-    logger.info(f"Final prompt: {transformed_prompt}")
 
     try:
         if mode == 'image':
